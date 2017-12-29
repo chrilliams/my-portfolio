@@ -51,7 +51,6 @@ describe("ExampleWork component", () => {
 
     it("Should have the image src set correctly", () => {
       expect(images.getElement().props.src).toEqual(myWork[1].image.src);
-      expect(5).toEqual(6);
     })
 
 
