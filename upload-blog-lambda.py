@@ -9,13 +9,15 @@ def lambda_handler(event, context):
     s3 = boto3.resource('s3')
     sns = boto3.resource('sns')
     topic = sns.Topic('arn:aws:sns:eu-west-2:094608791377:deployBlog')
+    codepipline = boto3.client('codepipeline')
 
     location = {
         "bucketName": "blogbuild.chrilliams.co.uk",
         "objectKey": "blogbuild.zip"
     }
+    job = event.get("CodePipeline.job")
+
     try:
-        job = event.get("CodePipeline.job")
         if job:
             for artifact in job["data"]["inputArtifacts"]:
                 if artifact["name"] == "MyAppBuild":
@@ -38,10 +40,14 @@ def lambda_handler(event, context):
 
         topic.publish(Subject="Blog Deploy", Message="Blog Deployed Successfully")
         if job:
-            codepipline = boto3.client('codepipeline')
             codepipline.put_job_success_result(jobId=job["id"])
     except:
         topic.publish(Subject="Blog Deploy Failed", Message="Blog was not deployed!")
+        if job:
+            codepipline.put_job_failure_result(jobId=job["id"],
+                failureDetails={
+                    'type': 'JobFailed',
+                    'message': 'Blog was not deployed'})
         raise
 
 
